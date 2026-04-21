@@ -5,3 +5,31 @@ startup mount force;
 restore database root;
 recover database root;
 alter database open;
+
+-------------------------------------------
+-- Recuperação de PDB$SEED
+-------------------------------------------
+
+-- Verifica status
+select * from v$pdbs;
+
+-- Verificar arquivos que precisam ser recuperados
+select r.file#, r.online_status, r.error, r.con_id, df.name, df.status 
+from v$recover_file r
+inner join v$datafile df on r.file# = df.file#;
+
+-- Tenta criar um PDB. Teremos um erro.
+create pluggable database teste 
+admin user testeadm identified by oracle
+file_name_convert = ('/opt/oracle/oradata/XE/pdbseed', '/opt/oracle/oradata/XE/teste');
+
+-- Fecha PDB;
+alter pluggable database pdb$seed close immediate;
+-- Tenta abrir. Teremos erro. Permanece em MOUNT.
+alter pluggable database pdb$seed open read only;
+
+-- No RMAN
+-- Precisa das aspas duplas por causa do $ no nome do pdb
+restore pluggable database "pdb$seed";
+recover pluggable database "pdb$seed";
+alter pluggable database "pdb$seed" open read only;
