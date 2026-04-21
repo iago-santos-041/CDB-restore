@@ -1,0 +1,7 @@
+-- Falha, sem alguns datafiles do CDB
+startup force
+
+startup mount force;
+restore database root;
+recover database root;
+alter database open;
